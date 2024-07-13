@@ -4,13 +4,13 @@ CC           := gcc
 SRC_DIR      := ./src
 INC_DIR      := ./include
 BUILD_DIR    := ./build
-CFLAGS       :=  -I$(INC_DIR) -std=c99 -Wall -Wextra -Werror $(SDL_CFLAGS)
-LDFLAGS      := $(SDL_LDFLAGS)
+CFLAGS       :=  -I$(INC_DIR) -D_REENTRANT -std=c99 -Wall -Wextra -Werror
+LDFLAGS      :=  -lSDL2main -lSDL2 
 
 all: program
 
 program: $(BUILD_DIR)/*.o
-	$(CC) $<  -o $(BUILD_DIR)/$(PROGRAM_NAME)
+	$(CC) $< $(LDFLAGS) -o $(BUILD_DIR)/$(PROGRAM_NAME)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c build
 	$(CC) $(CFLAGS) -c $< -o $@

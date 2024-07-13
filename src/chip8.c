@@ -1,8 +1,2 @@
-#include <stdio.h>
-#include <SDL2/SDL.h>
+#pragma once
 
-int main (void){
-    printf("Hello World!");
-
-    return 0;
-}
