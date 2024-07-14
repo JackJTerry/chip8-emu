@@ -1,21 +1,23 @@
-PROGRAM_NAME := chip8.x86
-
 CC           := gcc
 SRC_DIR      := ./src
 INC_DIR      := ./include
 BUILD_DIR    := ./build
+SRCS         := $(wildcard $(SRC_DIR)/*.c)
+OBJS         := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 CFLAGS       :=  -I$(INC_DIR) -D_REENTRANT -std=c99 -Wall -Wextra -Werror
-LDFLAGS      :=  -lSDL2main -lSDL2 
+LDFLAGS      :=  -lSDL2main -lSDL2
 
-all: program
+PROGRAM      := $(BUILD_DIR)/chip8.x86
 
-program: $(BUILD_DIR)/*.o
-	$(CC) $< $(LDFLAGS) -o $(BUILD_DIR)/$(PROGRAM_NAME)
+all: $(PROGRAM)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c build
+$(PROGRAM): $(OBJS)
+	$(CC) $(LDFLAGS) $^ -o $(PROGRAM)
+
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-build:
+$(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 clean:
