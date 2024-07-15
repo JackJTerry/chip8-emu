@@ -42,9 +42,9 @@ void chip8_init(CHIP8 *chip8) {
 
 void chip8_load_rom(CHIP8 *chip8, char *file_name) {
     (void) file_name;
-    FILE *file = fopen("/home/undefined/C/chip8-emu/IBM_Logo.ch8","rb");
+    FILE *file = fopen(file_name,"rb");
 
-    if (file == NULL) puts("fuck");
+    if (file == NULL) puts("Couldn't find File");
 
     fread(chip8->memory+0x200, 1, sizeof(chip8->memory)-0x200, file);
     fclose(file);

@@ -9,7 +9,7 @@ void sdl_init_screen(SDL_SCREEN *sdl){
 
     sdl->window = SDL_CreateWindow(WINDOW_TITLE, 
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                sdl->width * SCALE, sdl->height * SCALE, SDL_WINDOW_SHOWN);
+                sdl->width * SCALE, sdl->height * SCALE, SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
     if(sdl->window == NULL){
         printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
     }
