@@ -1,5 +1,6 @@
 #pragma once
 #include <SDL2/SDL.h>
+#include "chip8.h"
 
 #define WINDOW_TITLE "CHIP 8 EMU"
 #define WINDOW_HEIGHT 32
@@ -16,4 +17,4 @@ typedef struct SDL_SCREEN{
 
 void sdl_init_screen(SDL_SCREEN *sdl);
 void sdl_destroy_screen(SDL_SCREEN *sdl);
-void sdl_draw_screen(SDL_SCREEN *sdl);
+void sdl_draw_screen(SDL_SCREEN *sdl, CHIP8 *chip8);
