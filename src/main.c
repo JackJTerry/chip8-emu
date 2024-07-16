@@ -22,18 +22,28 @@ int main(int argc, char *argv[])
     chip8_load_rom(&chip8, file_name);
 
     while(true) {
-        SDL_Event event;
-        SDL_PollEvent(&event);
+        SDL_Event e;
+        SDL_PollEvent(&e);
+        chip8_handle_keypad(&chip8, &e);
 
         chip8_execute_instruction(&chip8);
-        if (chip8.draw_flag) sdl_draw_screen(&sdl, &chip8);
+        if (chip8.draw_flag){
+            sdl_draw_screen(&sdl, &chip8);
+            chip8.draw_flag = 0;
+        }
 
-        if(event.type == SDL_QUIT) {
+        if(e.type == SDL_QUIT) {
             break;
         }
+
+        if(e.type == SDL_KEYDOWN) {
+            if (e.key.keysym.sym == SDLK_ESCAPE) break;
+        }
+
         sleep(0.002);
     }
-
+    puts("exiting");
     sdl_destroy_screen(&sdl);
+    SDL_Quit();
     return 0;
 }

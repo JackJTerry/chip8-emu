@@ -9,7 +9,7 @@ void sdl_init_screen(SDL_SCREEN *sdl){
 
     sdl->window = SDL_CreateWindow(WINDOW_TITLE, 
                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                sdl->width * SCALE, sdl->height * SCALE, SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+                sdl->width * SCALE, sdl->height * SCALE, SDL_WINDOW_RESIZABLE);
     if(sdl->window == NULL){
         printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
     }
@@ -29,16 +29,15 @@ void sdl_init_screen(SDL_SCREEN *sdl){
     SDL_RenderSetScale(sdl->renderer, SCALE, SCALE);
 }
 void sdl_destroy_screen(SDL_SCREEN *sdl){
-    SDL_DestroyWindow(sdl->window);
-    SDL_DestroyRenderer(sdl->renderer);
     SDL_DestroyTexture(sdl->texture);
-    SDL_Quit();
+    SDL_DestroyRenderer(sdl->renderer);
+    SDL_DestroyWindow(sdl->window);
 }
 void sdl_draw_screen(SDL_SCREEN *sdl, CHIP8 *chip8){
-    SDL_SetRenderDrawColor(sdl->renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(sdl->renderer, 255, 234, 249, 255);
     SDL_RenderClear(sdl->renderer);
 
-    SDL_SetRenderDrawColor(sdl->renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(sdl->renderer, 0, 76, 61, 255);
     for (int y = 0; y < WINDOW_HEIGHT; y++){
         for (int x = 0; x < WINDOW_WIDTH; x++) {
             if (chip8->graphics[x + (y * 64)]) {

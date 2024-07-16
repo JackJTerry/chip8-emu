@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <SDL2/SDL.h>
 
 typedef struct CHIP8 {
 uint16_t opcode;
@@ -19,10 +20,11 @@ uint8_t sound_flag;
 } CHIP8;
 
 void chip8_init(CHIP8 *chip8);
-void chip8_set_keypad(CHIP8 *chip8);
+void chip8_handle_keypad(CHIP8 *chip8, SDL_Event *e);
 void chip8_emu_cycle(CHIP8 *chip8);
 void chip8_execute_instruction(CHIP8 *chip8);
 void chip8_load_rom(CHIP8 *chip8, char* file_name);
+void chip8_keyup(CHIP8 *chip8, SDL_Event *e);
 
 #define MERGE_BYTES(hb, lb) (hb << 8 | lb) // 0x[hblb]
 #define NNN_MASK(opcode) (opcode & 0x0FFF) // nibbles 2, 3, 4
