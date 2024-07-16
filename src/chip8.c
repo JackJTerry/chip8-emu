@@ -89,6 +89,8 @@ void chip8_emu_cycle(CHIP8 *chip8) {
     chip8->draw_flag = 0;
     chip8->sound_flag = 0;
     chip8_execute_instruction(chip8);
+    if (chip8->delay_timer > 0) --chip8->delay_timer;
+    if (chip8->sound_timer > 0) --chip8->sound_timer;
 }
 
 void chip8_execute_instruction(CHIP8 *chip8) {
@@ -155,17 +157,25 @@ void chip8_execute_instruction(CHIP8 *chip8) {
                     break;
                 case 0x0004:
                     chip8->V[x] += chip8->V[y];
+                    if (chip8->V[x] + chip8->V[y] > 255) chip8->V[0xF] = 1;
+                    else chip8->V[0xF] = 0;
                     break;
                 case 0x0005:
                     chip8->V[x] -= chip8->V[y];
+                    if (chip8->V[x] <= chip8->V[y]) chip8->V[0xF] = 0;
+                    else chip8->V[0xF] = 1;
                     break;
                 case 0x0006:
+                    chip8->V[0xF] = chip8->V[x] &1;
                     chip8->V[x] >>= 1;
                     break;
                 case 0x0007:
                     chip8->V[x] = (chip8->V[y] - chip8->V[x]);
+                    if (chip8->V[y] <= chip8->V[x]) chip8->V[0xF] = 0;
+                    else chip8->V[0xF] = 1;
                     break;
                 case 0x000E:
+                    chip8->V[0xF] = chip8->V[x] >>7;
                     chip8->V[x] <<= 1;
                     break;
             }

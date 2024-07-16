@@ -2,6 +2,7 @@
 #include "chip8.h"
 #include <stdbool.h>
 #include <unistd.h>
+#include <time.h>
 
 int main(int argc, char *argv[])
 {
@@ -22,14 +23,14 @@ int main(int argc, char *argv[])
     chip8_load_rom(&chip8, file_name);
 
     while(true) {
+        struct timespec remaining, request = {0, 1600000};
         SDL_Event e;
         SDL_PollEvent(&e);
         chip8_handle_keypad(&chip8, &e);
 
-        chip8_execute_instruction(&chip8);
+        chip8_emu_cycle(&chip8);
         if (chip8.draw_flag){
             sdl_draw_screen(&sdl, &chip8);
-            chip8.draw_flag = 0;
         }
 
         if(e.type == SDL_QUIT) {
@@ -40,7 +41,7 @@ int main(int argc, char *argv[])
             if (e.key.keysym.sym == SDLK_ESCAPE) break;
         }
 
-        sleep(0.002);
+        nanosleep(&request, &remaining); 
     }
     puts("exiting");
     sdl_destroy_screen(&sdl);
