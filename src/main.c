@@ -23,24 +23,23 @@ int main(int argc, char *argv[])
     chip8_load_rom(&chip8, file_name);
 
     while(true) {
-        struct timespec remaining, request = {0, 2000000};
-        SDL_Event e;
-        SDL_PollEvent(&e);
-        chip8_handle_keypad(&chip8, &e);
+        struct timespec remaining, request = {0, 22000000}; // I have no clue what to set this to now
+        
+            SDL_Event e;
+            SDL_PollEvent(&e);
+            chip8_handle_keypad(&chip8, &e);
+            chip8_emu_cycle(&chip8);
+            if (chip8.draw_flag){
+                sdl_draw_screen(&sdl, &chip8);
+            }
 
-        chip8_emu_cycle(&chip8);
-        if (chip8.draw_flag){
-            sdl_draw_screen(&sdl, &chip8);
-        }
+            if(e.type == SDL_QUIT) {
+                break;
+            }
 
-        if(e.type == SDL_QUIT) {
-            break;
-        }
-
-        if(e.type == SDL_KEYDOWN) {
-            if (e.key.keysym.sym == SDLK_ESCAPE) break;
-        }
-
+            if(e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_ESCAPE) break;
+            }
         nanosleep(&request, &remaining); 
     }
     puts("exiting");

@@ -57,6 +57,7 @@ void chip8_init(CHIP8 *chip8) {
     memset(chip8->V, 0, 16*sizeof(uint8_t));
     memset(chip8->graphics, 0, 2048);
     memset(chip8->keypad, 0, 16*sizeof(uint8_t));
+    memset(chip8->previous_keypad, 0, 16*sizeof(uint8_t));
     memcpy(chip8->memory, chip8_font, 80*sizeof(int8_t));
 }
 
@@ -75,6 +76,12 @@ void chip8_handle_keypad(CHIP8 *chip8, SDL_Event *e){
     }
 }
 
+void chip8_store_keypad(CHIP8 *chip8) {
+    for (int i = 0; i < 16; i++) {
+        chip8->previous_keypad[i] = chip8->keypad[i];
+    }
+}
+
 void chip8_load_rom(CHIP8 *chip8, char *file_name) {
     (void) file_name;
     FILE *file = fopen(file_name,"rb");
@@ -88,9 +95,12 @@ void chip8_load_rom(CHIP8 *chip8, char *file_name) {
 void chip8_emu_cycle(CHIP8 *chip8) {
     chip8->draw_flag = 0;
     chip8->sound_flag = 0;
-    chip8_execute_instruction(chip8);
+    for (int i = 0; i < 11; i++) {
+        chip8_execute_instruction(chip8);
+    }
     if (chip8->delay_timer > 0) --chip8->delay_timer;
     if (chip8->sound_timer > 0) --chip8->sound_timer;
+    chip8_store_keypad(chip8);
 }
 
 void chip8_execute_instruction(CHIP8 *chip8) {
@@ -143,40 +153,51 @@ void chip8_execute_instruction(CHIP8 *chip8) {
             break;
         case 0x8000:
             switch(n){
+                int tmp;
                 case 0x0000:
                     chip8->V[x] = chip8->V[y];
                     break;
                 case 0x0001:
                     chip8->V[x] |= chip8->V[y];
+                    chip8->V[0xF] = 0; //quirk chip8
                     break;
                 case 0x0002:
                     chip8->V[x] &= chip8->V[y];
+                    chip8->V[0xF] = 0; //quirk chip8
                     break;
                 case 0x0003:
                     chip8->V[x] ^= chip8->V[y];
+                    chip8->V[0xF] = 0; //quirk chip8
                     break;
                 case 0x0004:
+                    if (chip8->V[x] + chip8->V[y] > 255) tmp = 1;
+                    else tmp = 0;
                     chip8->V[x] += chip8->V[y];
-                    if (chip8->V[x] + chip8->V[y] > 255) chip8->V[0xF] = 1;
-                    else chip8->V[0xF] = 0;
+                    chip8->V[0xF] = tmp;
                     break;
                 case 0x0005:
+                    if (chip8->V[x] < chip8->V[y]) tmp = 0;
+                    else tmp = 1;
                     chip8->V[x] -= chip8->V[y];
-                    if (chip8->V[x] <= chip8->V[y]) chip8->V[0xF] = 0;
-                    else chip8->V[0xF] = 1;
+                    chip8->V[0xF] = tmp;
                     break;
                 case 0x0006:
-                    chip8->V[0xF] = chip8->V[x] &1;
+                    chip8->V[x] = chip8->V[y]; //quirk chip8
+                    tmp = chip8->V[x] &1;
                     chip8->V[x] >>= 1;
+                    chip8->V[0xF] = tmp;
                     break;
                 case 0x0007:
+                    if (chip8->V[y] < chip8->V[x]) tmp = 0;
+                    else tmp = 1;
                     chip8->V[x] = (chip8->V[y] - chip8->V[x]);
-                    if (chip8->V[y] <= chip8->V[x]) chip8->V[0xF] = 0;
-                    else chip8->V[0xF] = 1;
+                    chip8->V[0xF] = tmp;
                     break;
                 case 0x000E:
-                    chip8->V[0xF] = chip8->V[x] >>7;
+                    chip8->V[x] = chip8->V[y]; //quirk chip8
+                    tmp = chip8->V[x] >>7;
                     chip8->V[x] <<= 1;
+                    chip8->V[0xF] = tmp;
                     break;
             }
             break;
@@ -193,10 +214,10 @@ void chip8_execute_instruction(CHIP8 *chip8) {
             chip8->V[x] = ((rand() % 256) & nn);
             break;
         case 0xD000:
+            /*
             uint8_t VX = chip8->V[x];
             uint8_t VY = chip8->V[y];
             uint8_t px;
-            
             chip8->V[0xF] = 0;
             for (int yline = 0; yline < n; yline++) {
                 px = chip8->memory[chip8->I + yline];
@@ -209,16 +230,39 @@ void chip8_execute_instruction(CHIP8 *chip8) {
                     }
                 }
             }
+            */
+            uint8_t x_cord = chip8->V[x] % 64;
+            uint8_t y_cord = chip8->V[y] % 32;
+            
+            chip8->V[0xF] = 0;
+            for (int y_line = 0; y_line < n; y_line++){
+                uint8_t px_y = y_cord + y_line;
+                if (px_y >= 32) {
+                    break;
+                }
+                uint8_t px = chip8->memory[chip8->I + y_line];
+                for (int x_line = 0; x_line < 8; x_line++) {
+                    uint8_t px_x = x_cord + x_line;
+                    if (px_x >= 64) {
+                    break;
+                    }
+
+                    if ((px & (0x80 >> x_line)) != 0) {
+                        if (chip8->graphics[x_cord + x_line + ((y_cord + y_line) * 64)] == 1) chip8->V[0xF] = 1;
+                        chip8->graphics[x_cord + x_line + ((y_cord + y_line) * 64)] ^= 1;
+                    }
+                }
+            }
             chip8->draw_flag = 1;
             break;
 
         case 0xE000:
             switch(nn){
                 case 0x09E:
-                    if (chip8->keypad[chip8->V[x]]) chip8->pc += 2;
+                    if (chip8->keypad[0xF & chip8->V[x]]) chip8->pc += 2;
                     break;
                 case 0x0A1:
-                    if (!chip8->keypad[chip8->V[x]]) chip8->pc += 2;
+                    if (!chip8->keypad[0xF & chip8->V[x]]) chip8->pc += 2;
                     break;
             }
             break;
@@ -228,15 +272,15 @@ void chip8_execute_instruction(CHIP8 *chip8) {
                     chip8->V[x] = chip8->delay_timer;
                     break;
                 case 0x000A:
-                    int keypress = 0;
+                    int keyrelease = 0;
                     for (int i = 0; i < 16; i++){
-                        if (chip8->keypad[i] != 0) {
+                        if (chip8->previous_keypad[i] == 1 && chip8->keypad[i] == 0) {
                             chip8->V[x] = i;
-                            keypress = 1;
+                            keyrelease = 1;
                             break;
                         }
                     }
-                    if (!keypress) chip8->pc -= 2;
+                    if (!keyrelease) chip8->pc -= 2;
                     break;
                 case 0x0015:
                     chip8->delay_timer = chip8->V[x];
@@ -248,7 +292,7 @@ void chip8_execute_instruction(CHIP8 *chip8) {
                     chip8->I += chip8->V[x];
                     break;
                 case 0x0029:
-                    chip8->I = chip8->V[x] * 5;
+                    chip8->I = (0xF & chip8->V[x]) * 5;
                     break;
                 case 0x0033:
                     chip8->memory[chip8->I] = chip8->V[x] / 100;
@@ -259,11 +303,13 @@ void chip8_execute_instruction(CHIP8 *chip8) {
                     for (int i = 0; i <= x; i++) {
                         chip8->memory[chip8->I +i] = chip8->V[i];
                     }
+                    chip8->I += (x + 1); //quirk chip8
                     break;
                 case 0x0065:
                     for (int i = 0; i <= x; i++) {
                         chip8->V[i] = chip8->memory[chip8->I +i];
                     }
+                    chip8->I += (x + 1); //quirk chip8
                     break;
             }
         break;
