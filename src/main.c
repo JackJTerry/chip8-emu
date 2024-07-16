@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     chip8_load_rom(&chip8, file_name);
 
     while(true) {
-        struct timespec remaining, request = {0, 1600000};
+        struct timespec remaining, request = {0, 2000000};
         SDL_Event e;
         SDL_PollEvent(&e);
         chip8_handle_keypad(&chip8, &e);
