@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <SDL2/SDL.h>
+#include <stdbool.h>
 
 const uint8_t chip8_font[] = {
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -95,7 +96,7 @@ void chip8_load_rom(CHIP8 *chip8, char *file_name) {
 void chip8_emu_cycle(CHIP8 *chip8) {
     chip8->draw_flag = 0;
     chip8->sound_flag = 0;
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 8; i++) { //8 for disp.wait | 11 normally
         chip8_execute_instruction(chip8);
     }
     if (chip8->delay_timer > 0) --chip8->delay_timer;
@@ -106,7 +107,9 @@ void chip8_emu_cycle(CHIP8 *chip8) {
 void chip8_execute_instruction(CHIP8 *chip8) {
     uint8_t x, y, nn, n;
     uint16_t nnn;
-    chip8->opcode = MERGE_BYTES(chip8->memory[chip8->pc], chip8->memory[chip8->pc + 1]);
+    if(!overflow_nnn(chip8->pc) && !overflow_nnn(chip8->pc +1)) {
+        chip8->opcode = MERGE_BYTES(chip8->memory[chip8->pc], chip8->memory[chip8->pc + 1]);
+    }
     x = X_MASK(chip8->opcode);
     y = Y_MASK(chip8->opcode);
     nnn = NNN_MASK(chip8->opcode);
@@ -214,23 +217,6 @@ void chip8_execute_instruction(CHIP8 *chip8) {
             chip8->V[x] = ((rand() % 256) & nn);
             break;
         case 0xD000:
-            /*
-            uint8_t VX = chip8->V[x];
-            uint8_t VY = chip8->V[y];
-            uint8_t px;
-            chip8->V[0xF] = 0;
-            for (int yline = 0; yline < n; yline++) {
-                px = chip8->memory[chip8->I + yline];
-                for (int xline = 0; xline < 8; xline++) {
-                    if((px & (0x80 >> xline)) !=0){
-                        if(chip8->graphics[VX + xline +((VY + yline) * 64)] == 1) {
-                            chip8->V[0xF] = 1;
-                        }
-                        chip8->graphics[VX + xline +((VY + yline) * 64)] ^= 1;
-                    }
-                }
-            }
-            */
             uint8_t x_cord = chip8->V[x] % 64;
             uint8_t y_cord = chip8->V[y] % 32;
             
@@ -240,7 +226,10 @@ void chip8_execute_instruction(CHIP8 *chip8) {
                 if (px_y >= 32) {
                     break;
                 }
-                uint8_t px = chip8->memory[chip8->I + y_line];
+                uint8_t px;
+                if (!overflow_nnn(chip8->I + y_line)){
+                    px = chip8->memory[chip8->I + y_line];
+                }
                 for (int x_line = 0; x_line < 8; x_line++) {
                     uint8_t px_x = x_cord + x_line;
                     if (px_x >= 64) {
@@ -295,19 +284,32 @@ void chip8_execute_instruction(CHIP8 *chip8) {
                     chip8->I = (0xF & chip8->V[x]) * 5;
                     break;
                 case 0x0033:
-                    chip8->memory[chip8->I] = chip8->V[x] / 100;
-			        chip8->memory[chip8->I + 1] = (chip8->V[x] / 10) % 10;
-			        chip8->memory[chip8->I + 2] = (chip8->V[x] % 100) % 10;
+                    if (!overflow_nnn(chip8->I)){
+                        chip8->memory[chip8->I] = chip8->V[x] / 100;
+                    }
+                    if (!overflow_nnn(chip8->I + 1)){
+                        chip8->memory[chip8->I + 1] = (chip8->V[x] / 10) % 10;
+                    }
+                    if (!overflow_nnn(chip8->I + 2)){
+                        chip8->memory[chip8->I + 2] = (chip8->V[x] % 100) % 10;
+                    }
 			        break;
                 case 0x0055:
                     for (int i = 0; i <= x; i++) {
-                        chip8->memory[chip8->I +i] = chip8->V[i];
+                        if (!overflow_nnn(chip8->I +i)){
+                            chip8->memory[chip8->I +i] = chip8->V[i];
+                        }
                     }
                     chip8->I += (x + 1); //quirk chip8
                     break;
                 case 0x0065:
                     for (int i = 0; i <= x; i++) {
-                        chip8->V[i] = chip8->memory[chip8->I +i];
+                        if (!overflow_nnn(chip8->I +i)){
+                            chip8->V[i] = chip8->memory[chip8->I +i];
+                        }
+                        else {
+                            chip8->V[i] = 0;  
+                        }
                     }
                     chip8->I += (x + 1); //quirk chip8
                     break;
@@ -315,3 +317,5 @@ void chip8_execute_instruction(CHIP8 *chip8) {
         break;
     }
 }
+
+bool overflow_nnn(unsigned val) { return val >> 12; }

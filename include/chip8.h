@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <SDL2/SDL.h>
+#include <stdbool.h>
 
 typedef struct CHIP8 {
 uint16_t opcode;
@@ -26,6 +27,7 @@ void chip8_store_keypad(CHIP8 *chip8);
 void chip8_emu_cycle(CHIP8 *chip8);
 void chip8_execute_instruction(CHIP8 *chip8);
 void chip8_load_rom(CHIP8 *chip8, char* file_name);
+bool overflow_nnn(unsigned val);
 
 #define MERGE_BYTES(hb, lb) (hb << 8 | lb) // 0x[hblb]
 #define NNN_MASK(opcode) (opcode & 0x0FFF) // nibbles 2, 3, 4
@@ -33,3 +35,4 @@ void chip8_load_rom(CHIP8 *chip8, char* file_name);
 #define N_MASK(opcode) (opcode & 0x000F) // nibble 4
 #define X_MASK(opcode) ((opcode & 0x0F00) >> 8) // nibble 2
 #define Y_MASK(opcode) ((opcode & 0x00F0) >> 4) // nibble 3
+#define FRAME_DELAY 1000 / 60.0

@@ -34,10 +34,10 @@ void sdl_destroy_screen(SDL_SCREEN *sdl){
     SDL_DestroyWindow(sdl->window);
 }
 void sdl_draw_screen(SDL_SCREEN *sdl, CHIP8 *chip8){
-    SDL_SetRenderDrawColor(sdl->renderer, 255, 234, 249, 255);
+    SDL_SetRenderDrawColor(sdl->renderer, 56, 43, 38, 255);
     SDL_RenderClear(sdl->renderer);
 
-    SDL_SetRenderDrawColor(sdl->renderer, 0, 76, 61, 255);
+    SDL_SetRenderDrawColor(sdl->renderer, 184, 194, 185, 255);
     for (int y = 0; y < WINDOW_HEIGHT; y++){
         for (int x = 0; x < WINDOW_WIDTH; x++) {
             if (chip8->graphics[x + (y * 64)]) {
